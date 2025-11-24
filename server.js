@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ⚠️ À définir dans Render (Settings > Environment)
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "change-this-password";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "hmk2025";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
 
 // Middlewares
