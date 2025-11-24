@@ -302,25 +302,5 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(response => response.json())
     .then(data => {
       const jsonString = JSON.stringify(data, null, 2);
-
-      // Création du fichier JSON en mémoire
-      const blob = new Blob([jsonString], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-
-      // Création d'un lien de téléchargement temporaire
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "shop_backup.json"; // 👈 NOM OBLIGATOIRE
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      URL.revokeObjectURL(url);
-    })
-    .catch(err => {
-      console.error("Erreur lors du téléchargement du shop :", err);
-      alert("Impossible de télécharger le shop.");
-    });
-});
   });
 });
