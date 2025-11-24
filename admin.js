@@ -296,29 +296,31 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTable();
     resetForm();
     infoMsg.textContent = "Maillot ajouté / modifié (pense à sauvegarder).";
-  });
 
-  // 🚀 SAUVEGARDE dans maillots.json
-  saveAllBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    infoMsg.textContent = "Sauvegarde en cours...";
+    document.getElementById("downloadShopBtn").addEventListener("click", () => {
+  fetch("/api/maillots")
+    .then(response => response.json())
+    .then(data => {
+      const jsonString = JSON.stringify(data, null, 2);
 
-    fetch("/api/maillots", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(maillots),
+      // Création du fichier JSON en mémoire
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      // Création d'un lien de téléchargement temporaire
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "shop_backup.json"; // 👈 NOM OBLIGATOIRE
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      URL.revokeObjectURL(url);
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Erreur HTTP");
-        return res.json();
-      })
-      .then(() => {
-        infoMsg.textContent = "Sauvegarde effectuée dans maillots.json ✅";
-      })
-      .catch((err) => {
-        console.error("Erreur sauvegarde", err);
-        infoMsg.textContent =
-          "Erreur lors de la sauvegarde. Vérifie que le serveur tourne.";
-      });
+    .catch(err => {
+      console.error("Erreur lors du téléchargement du shop :", err);
+      alert("Impossible de télécharger le shop.");
+    });
+});
   });
 });
