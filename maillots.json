@@ -1,0 +1,77 @@
+[
+  {
+    "id": 1,
+    "nom": "Real Madrid Domicile 24/25",
+    "club": "Real Madrid",
+    "categorie": "Liga",
+    "prix": 20,
+    "taille": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "image": "https://assets.adidas.com/images/w_600,f_auto,q_auto/78b62417f1e042aeb25e3353d278de3b_9366/Maillot_Domicile_Real_Madrid_24-25_Authentique_Blanc_IX8095_HM1.jpg",
+    "stock": 0
+  },
+  {
+    "id": 2,
+    "nom": "FC Barcelone Domicile 24/25",
+    "club": "FC Barcelone",
+    "categorie": "Liga",
+    "prix": 20,
+    "taille": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "image": "https://images2.minutemediacdn.com/image/upload/c_crop,w_828,h_828,x_0,y_29/c_fill,w_720,ar_1:1,f_auto,q_auto,g_auto/images/voltaxMediaLibrary/mmsport/90min_fr_international_web/01hp6nhyjsr2yazz29az.jpg",
+    "stock": 1
+  },
+  {
+    "id": 3,
+    "nom": "Manchester United Domicile 24/25",
+    "club": "Manchester United",
+    "categorie": "Premier League",
+    "prix": 20,
+    "taille": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "image": "https://images.prodirectsport.com/ProductImages/Main/1018234_Main_1827132.jpg",
+    "stock": 0
+  },
+  {
+    "id": 4,
+    "nom": "Real Madrid Domicile 1999",
+    "club": "Real Madrid",
+    "categorie": "Liga",
+    "prix": 20,
+    "taille": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "image": "https://www.foot.fr/138115-pdt_1500/maillot-real-madrid-domicile-retro-99.jpg",
+    "stock": 5
+  },
+  {
+    "id": 5,
+    "nom": "Séléction France Domicile 1998",
+    "club": "France",
+    "categorie": "Sélection",
+    "prix": 20,
+    "taille": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "image": "https://iconicfootballshop.com/wp-content/uploads/2024/08/Maillot-France-1998-2000-Domicile-Zidane-10-1.webp",
+    "stock": 50
+  }
+]

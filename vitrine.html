@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>HMK IDF 75 - Nos Maillots</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
+<div class="site-wrapper">
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+  <img src="logo.png" alt="Logo HMK" class="logo-img">
+  <span>HMK • IDF 75</span>
+</div>
+      <nav class="nav">
+        <a href="index.html">Accueil</a>
+        <a href="vitrine.html" class="active">Tout les maillots</a>
+        <a href="contact.html">Contact & Fonctionnement</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <section class="banner">
+        <div class="banner-title">Vitrine complète</div>
+        <div class="banner-subtitle">
+          Tous les maillots disponibles actuellement. Écris-nous pour vérifier les tailles et réserver ton modèle.
+        </div>
+      </section>
+
+      <section>
+        <div class="filters-bar" data-filters>
+          <div class="filters-group">
+            <label for="filter-search">Recherche</label>
+            <input
+              type="text"
+              id="filter-search"
+              placeholder="Club, sélection, nom de maillot..."
+            />
+          </div>
+
+          <div class="filters-group">
+            <label for="filter-categorie">Catégorie</label>
+            <select id="filter-categorie">
+              <option value="">Toutes</option>
+              <!-- options ajoutées en JS -->
+            </select>
+          </div>
+
+          <div class="filters-group">
+            <label for="filter-taille">Taille</label>
+            <select id="filter-taille">
+              <option value="">Toutes</option>
+              <!-- options ajoutées en JS -->
+            </select>
+          </div>
+
+          <div class="filters-group">
+  <label for="filter-stock">Disponibilité</label>
+  <select id="filter-stock">
+    <option value="">Tous</option>
+    <option value="in">En stock</option>
+    <option value="out">Rupture</option>
+  </select>
+</div>
+
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Tous les maillots</h2>
+        <!-- Pas de limite ici : on affiche tout le JSON -->
+        <div class="maillots-grid" data-maillots-grid></div>
+      </section>
+
+
+      <section>
+        <h2 class="section-title">Tous les maillots</h2>
+        <!-- Pas de limite ici : on affiche tout le JSON -->
+        <div class="maillots-grid" data-maillots-grid></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>HMK IDF 75 • Maillots & T-shirts de foot</div>
+      <div>Snap : hmk.idf • Livraison IDF & Retrait Paris 17</div>
+    </div>
+  </footer>
+</div>
+
+<script src="script.js"></script>
+
+<!-- Popup fiche maillot -->
+<div id="maillot-modal" class="modal">
+  <div class="modal-overlay" data-modal-close></div>
+  <div class="modal-content">
+    <button class="modal-close" type="button" data-modal-close>&times;</button>
+    <div class="modal-body" id="maillot-modal-body">
+      <!-- Contenu rempli en JS -->
+    </div>
+  </div>
+</div>
+<!-- Bouton Snapchat flottant -->
+<a href="https://www.snapchat.com/add/hmk.idf" target="_blank" class="snap-floating">
+  <img src="https://app.snapchat.com/web/deeplink/snapcode?username=hmk.idf&type=SVG&bitmoji=enable" alt="Snap HMK" />
+</a>
+</body>
+</html>
