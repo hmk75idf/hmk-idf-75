@@ -24,6 +24,29 @@ const pool = new Pool({
   },
 });
 
+
+async function initDB() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS maillots (
+        id        INTEGER PRIMARY KEY,
+        nom       TEXT NOT NULL,
+        club      TEXT,
+        categorie TEXT,
+        prix      NUMERIC(10,2),
+        taille    TEXT,
+        image     TEXT,
+        stock     INTEGER
+      );
+    `);
+    console.log("Table maillots OK");
+  } catch (err) {
+    console.error("Erreur création table:", err);
+  }
+}
+initDB();
+
+
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
