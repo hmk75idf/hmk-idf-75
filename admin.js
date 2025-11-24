@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = "hmk2025"; // change le mot de passe ici
+// admin.js - version sécurisée avec login via /api/login
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("admin-login-form");
@@ -26,24 +26,81 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let maillots = [];
 
-  // 🔐 LOGIN
+  // 🔍 Vérifier si l'utilisateur est déjà connecté (session)
+  checkAuth();
+
+  function checkAuth() {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.isAdmin) {
+          // déjà connecté
+          loginSection.style.display = "none";
+          adminPanel.style.display = "block";
+          chargerMaillots();
+        } else {
+          // pas connecté
+          loginSection.style.display = "block";
+          adminPanel.style.display = "none";
+        }
+      })
+      .catch(() => {
+        loginSection.style.display = "block";
+        adminPanel.style.display = "none";
+      });
+  }
+
+  // 🔐 LOGIN via serveur
   loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (passwordInput.value === ADMIN_PASSWORD) {
-      loginSection.style.display = "none";
-      adminPanel.style.display = "block";
-      loginMessage.textContent = "";
-      chargerMaillots();
-    } else {
-      loginMessage.textContent = "Mot de passe incorrect.";
+    loginMessage.textContent = "";
+
+    const pwd = passwordInput.value.trim();
+    if (!pwd) {
+      loginMessage.textContent = "Mot de passe requis.";
+      return;
     }
+
+    fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password: pwd }),
+    })
+      .then((res) => {
+        if (res.ok) return res.json();
+        if (res.status === 401) {
+          throw new Error("bad-password");
+        }
+        throw new Error("server-error");
+      })
+      .then(() => {
+        // login réussi
+        passwordInput.value = "";
+        loginMessage.textContent = "";
+        loginSection.style.display = "none";
+        adminPanel.style.display = "block";
+        chargerMaillots();
+      })
+      .catch((err) => {
+        if (err.message === "bad-password") {
+          loginMessage.textContent = "Mot de passe incorrect.";
+        } else {
+          loginMessage.textContent =
+            "Erreur de connexion. Réessaie plus tard.";
+        }
+      });
   });
 
-  // 🔄 Charger les maillots depuis l'API
+  // 🔄 Charger les maillots
   function chargerMaillots() {
     infoMsg.textContent = "Chargement des maillots...";
     fetch("/api/maillots")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Erreur HTTP");
+        return res.json();
+      })
       .then((data) => {
         maillots = (Array.isArray(data) ? data : []).map((m, index) => {
           const idNum = Number(m.id);
@@ -99,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const tdTailles = document.createElement("td");
       tdTailles.textContent = Array.isArray(m.taille)
         ? m.taille.join(" / ")
-        : (m.taille || "");
+        : m.taille || "";
 
       const tdImage = document.createElement("td");
       tdImage.textContent = m.image || "";
@@ -117,6 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const delBtn = document.createElement("button");
       delBtn.textContent = "Supprimer";
       delBtn.className = "btn btn-secondary";
+      delBtn.style.marginLeft = "4px";
       delBtn.addEventListener("click", () => supprimerMaillot(m.id));
 
       tdActions.appendChild(editBtn);
@@ -144,7 +202,9 @@ document.addEventListener("DOMContentLoaded", () => {
     clubInput.value = m.club || "";
     catInput.value = m.categorie || "";
     prixInput.value = m.prix != null ? m.prix : "";
-    taillesInput.value = Array.isArray(m.taille) ? m.taille.join(",") : (m.taille || "");
+    taillesInput.value = Array.isArray(m.taille)
+      ? m.taille.join(",")
+      : m.taille || "";
     imageInput.value = m.image || "";
     stockInput.value = m.stock != null ? m.stock : 0;
   }
@@ -175,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resetForm();
   });
 
-  // 💾 AJOUT / MODIFICATION
+  // 💾 AJOUT / MODIF
   form.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -194,7 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const taillesArr = taillesVal
-      ? taillesVal.split(",").map((t) => t.trim())
+      ? taillesVal
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
       : [];
 
     if (idVal != null) {
@@ -213,9 +276,10 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       }
     } else {
-      const maxId = maillots.length > 0
-        ? Math.max(...maillots.map((m) => Number(m.id) || 0))
-        : 0;
+      const maxId =
+        maillots.length > 0
+          ? Math.max(...maillots.map((m) => Number(m.id) || 0))
+          : 0;
 
       maillots.push({
         id: maxId + 1,
@@ -231,11 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderTable();
     resetForm();
-    infoMsg.textContent = "Maillot ajouté / modifié.";
+    infoMsg.textContent = "Maillot ajouté / modifié (pense à sauvegarder).";
   });
 
-
-  // 🚀 SAUVEGARDE vers maillots.json
+  // 🚀 SAUVEGARDE dans maillots.json
   saveAllBtn.addEventListener("click", (e) => {
     e.preventDefault();
     infoMsg.textContent = "Sauvegarde en cours...";
@@ -255,7 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch((err) => {
         console.error("Erreur sauvegarde", err);
         infoMsg.textContent =
-          "Erreur lors de la sauvegarde. Vérifie que le serveur Node tourne.";
+          "Erreur lors de la sauvegarde. Vérifie que le serveur tourne.";
       });
   });
 });
