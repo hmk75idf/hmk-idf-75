@@ -8,6 +8,10 @@ const session = require("express-session");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// OBLIGATOIRE SUR RENDER !
+// Permet à Express d’accepter les cookies sécurisés derrière un proxy HTTPS.
+app.set("trust proxy", 1);
+
 // ⚠️ À définir dans Render (Settings > Environment)
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "hmk2025";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
@@ -16,6 +20,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ❤️ CONFIG SESSION 100% FONCTIONNELLE SUR RENDER
 app.use(
   session({
     secret: SESSION_SECRET,
@@ -23,8 +28,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production", // true en prod (https)
+      secure: true,          // OBLIGATOIRE sur Render (HTTPS)
+      sameSite: "none",      // OBLIGATOIRE aussi pour autoriser le cookie
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
     },
   })
@@ -63,7 +68,7 @@ app.post("/api/login", (req, res) => {
   return res.status(401).json({ error: "Mot de passe incorrect" });
 });
 
-// Logout admin (optionnel, pour plus tard)
+// Logout admin
 app.post("/api/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true });
@@ -72,7 +77,7 @@ app.post("/api/logout", (req, res) => {
 
 // ---- API MAILLOTS ----
 
-// Lecture maillots (PUBLIC - vitrine & index)
+// Lecture maillots (PUBLIC)
 app.get("/api/maillots", (req, res) => {
   const filePath = path.join(__dirname, "maillots.json");
 
