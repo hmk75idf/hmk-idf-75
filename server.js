@@ -1,26 +1,34 @@
-// server.js - version sécurisée avec login admin & sessions
+// server.js - version avec PostgreSQL
 
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 const session = require("express-session");
+const path = require("path");
+const { Pool } = require("pg");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// OBLIGATOIRE SUR RENDER !
-// Permet à Express d’accepter les cookies sécurisés derrière un proxy HTTPS.
+// Render HTTPS proxy
 app.set("trust proxy", 1);
 
-// ⚠️ À définir dans Render (Settings > Environment)
+// ENV
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "hmk2025";
-const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret";
+const DATABASE_URL = process.env.DATABASE_URL;
+
+// Connexion PostgreSQL
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ❤️ CONFIG SESSION 100% FONCTIONNELLE SUR RENDER
+// Sessions
 app.use(
   session({
     secret: SESSION_SECRET,
@@ -28,98 +36,112 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,          // OBLIGATOIRE sur Render (HTTPS)
-      sameSite: "none",      // OBLIGATOIRE aussi pour autoriser le cookie
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
 );
 
-// Fichiers statiques (HTML, CSS, JS, images…)
+// Fichiers statiques
 app.use(express.static(__dirname));
 
-// Middleware de protection admin
+// ---- ADMIN ----
 function requireAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin) {
-    return next();
-  }
+  if (req.session && req.session.isAdmin) return next();
   return res.status(401).json({ error: "Non autorisé" });
 }
 
-// ---- AUTH ADMIN ----
-
-// Vérifier si connecté (utilisé par admin.js)
 app.get("/api/me", (req, res) => {
   res.json({ isAdmin: !!req.session.isAdmin });
 });
 
-// Login admin
 app.post("/api/login", (req, res) => {
-  const { password } = req.body;
-  if (!password) {
-    return res.status(400).json({ error: "Mot de passe requis" });
-  }
-
-  if (password === ADMIN_PASSWORD) {
+  if (req.body.password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
     return res.json({ success: true });
   }
-
   return res.status(401).json({ error: "Mot de passe incorrect" });
 });
 
-// Logout admin
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.json({ success: true });
-  });
+  req.session.destroy(() => res.json({ success: true }));
 });
+
+// ---- DB FUNCTIONS ----
+async function getMaillots() {
+  const r = await pool.query(
+    "SELECT id, nom, club, categorie, prix, taille, image, stock FROM maillots ORDER BY id ASC"
+  );
+  return r.rows.map((m) => ({
+    ...m,
+    prix: Number(m.prix),
+    stock: Number(m.stock),
+    taille: m.taille ? m.taille.split(",").map((t) => t.trim()) : [],
+  }));
+}
+
+async function saveMaillots(list) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM maillots");
+
+    for (const m of list) {
+      await client.query(
+        `
+        INSERT INTO maillots (id, nom, club, categorie, prix, taille, image, stock)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      `,
+        [
+          Number(m.id),
+          m.nom,
+          m.club || "",
+          m.categorie || "",
+          Number(m.prix),
+          Array.isArray(m.taille) ? m.taille.join(",") : "",
+          m.image || "",
+          Number(m.stock),
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
 
 // ---- API MAILLOTS ----
-
-// Lecture maillots (PUBLIC)
-app.get("/api/maillots", (req, res) => {
-  const filePath = path.join(__dirname, "maillots.json");
-
-  fs.readFile(filePath, "utf-8", (err, data) => {
-    if (err) {
-      console.error("Erreur lecture maillots.json:", err);
-      return res
-        .status(500)
-        .json({ error: "Impossible de lire maillots.json" });
-    }
-
-    try {
-      const parsed = JSON.parse(data);
-      res.json(parsed);
-    } catch (e) {
-      console.error("Erreur parse maillots.json:", e);
-      res.status(500).json({ error: "JSON invalide dans maillots.json" });
-    }
-  });
+app.get("/api/maillots", async (req, res) => {
+  try {
+    const maillots = await getMaillots();
+    res.json(maillots);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur chargement maillots" });
+  }
 });
 
-// Écriture maillots (ADMIN uniquement)
-app.post("/api/maillots", requireAdmin, (req, res) => {
-  const filePath = path.join(__dirname, "maillots.json");
-  const payload = req.body;
+app.post("/api/maillots", requireAdmin, async (req, res) => {
+  if (!Array.isArray(req.body))
+    return res.status(400).json({ error: "Format invalide" });
 
-  fs.writeFile(filePath, JSON.stringify(payload, null, 2), "utf-8", (err) => {
-    if (err) {
-      console.error("Erreur écriture maillots.json:", err);
-      return res
-        .status(500)
-        .json({ error: "Impossible d'écrire maillots.json" });
-    }
+  try {
+    await saveMaillots(req.body);
     res.json({ success: true });
-  });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur sauvegarde maillots" });
+  }
 });
 
-// Route racine
+// ---- ROOT ----
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Serveur HMK IDF 75 lancé sur le port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Serveur lancé sur ${PORT}`));
